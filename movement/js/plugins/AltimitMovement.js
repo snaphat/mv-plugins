@@ -199,6 +199,8 @@
  * @help
  *
  * Plugin Command:
+ *   AltMovement disable                              # Disable the plugin
+ *   AltMovement enable                               # Enable the plugin
  *   AltMovement collider set "foo bar" 5             # Event name "foo bar" collider to preset 5
  *   AltMovement collider set 2 "shape A"             # Event ID 2 collider to preset "shape A"
  *   AltMovement collider set this 1                  # Current event collider to preset 1
@@ -237,6 +239,7 @@
  */
 ( function() {
 
+  var DISABLE_PLUGIN = false;
   var DOM_PARSER = new DOMParser();
   var PARAMETERS = PluginManager.parameters( 'AltimitMovement' );
 
@@ -413,6 +416,16 @@
         Game_Interpreter_pluginCommand.call( this, command, args );
         if ( command === 'AltMovement' ) {
           switch ( args[0] ) {
+          case 'disable':
+            DISABLE_PLUGIN = true;
+            $gamePlayer._x = Math.round($gamePlayer._x);
+            $gamePlayer._y = Math.round($gamePlayer._y);
+            break;
+          case 'enable':
+            DISABLE_PLUGIN = false;
+            $gamePlayer._x = Math.round($gamePlayer._x);
+            $gamePlayer._y = Math.round($gamePlayer._y);
+            break;
           case 'collider':
             this.altMovementCollider( args );
             break;
@@ -501,7 +514,8 @@
       };
 
       var Game_Interpreter_updateWaitMode = Game_Interpreter.prototype.updateWaitMode;
-      Game_Interpreter.prototype.updateWaitMode = function() {
+      Game_Interpreter.prototype.updateWaitMode = function () {
+        if (DISABLE_PLUGIN) return Game_Interpreter_updateWaitMode.call(this);
         if ( 'target' == this._waitMode ) {
           return this._character._moveTarget;
         }
@@ -824,7 +838,9 @@
         }
       };
 
+      var Game_CharacterBase_isOnLadder = Game_CharacterBase.prototype.isOnLadder;
       Game_CharacterBase.prototype.isOnLadder = function() {
+        if (DISABLE_PLUGIN) return Game_CharacterBase_isOnLadder.call(this);
         var aabbox = this.collider().aabbox;
         if ( aabbox.left >= 0 && aabbox.right <= 1 ) {
           // To use ladder the bounding box must fit on a tile
@@ -840,7 +856,9 @@
         return false;
       };
 
+      var Game_CharacterBase_moveStraight = Game_CharacterBase.prototype.moveStraight;
       Game_CharacterBase.prototype.moveStraight = function( d ) {
+        if (DISABLE_PLUGIN) return Game_CharacterBase_moveStraight.call(this, d);
         var vy = Direction.isUp( d ) ? -1 : ( Direction.isDown( d ) ? 1 : 0 );
         var vx = Direction.isLeft( d ) ? -1 : ( Direction.isRight( d ) ? 1 : 0 );
         if ( this._circularMovement ) {
@@ -851,7 +869,9 @@
         this.moveVector( vx * this.stepDistance, vy * this.stepDistance );
       };
 
+      var Game_CharacterBase_moveDiagonally = Game_CharacterBase.prototype.moveDiagonally;
       Game_CharacterBase.prototype.moveDiagonally = function( horz, vert ) {
+        if (DISABLE_PLUGIN) return Game_CharacterBase_moveDiagonally.call(this, horz, vert);
         var vy = Direction.isUp( vert ) ? -1 : ( Direction.isDown( vert ) ? 1 : 0 );
         var vx = Direction.isLeft( horz ) ? -1 : ( Direction.isRight( horz ) ? 1 : 0 );
         if ( this._circularMovement ) {
@@ -864,11 +884,13 @@
 
       var Game_CharacterBase_isMoving = Game_CharacterBase.prototype.isMoving;
       Game_CharacterBase.prototype.isMoving = function() {
+        if (DISABLE_PLUGIN) return Game_CharacterBase_isMoving.call(this);
         return Game_CharacterBase_isMoving.call( this ) || this._isMoving;
       };
 
       var Game_CharacterBase_updateAnimation = Game_CharacterBase.prototype.updateAnimation;
       Game_CharacterBase.prototype.updateAnimation = function() {
+        if (DISABLE_PLUGIN) return Game_CharacterBase_updateAnimation.call(this);
         Game_CharacterBase_updateAnimation.call( this );
         this._wasMoving = this._isMoving;
         this._isMoving = this._x !== this._realX || this._y !== this._realY;
@@ -877,7 +899,9 @@
         }
       };
 
+      var Game_CharacterBase_isOnBush = Game_CharacterBase.prototype.isOnBush;
       Game_CharacterBase.prototype.isOnBush = function() {
+        if (DISABLE_PLUGIN) return Game_CharacterBase_isOnBush.call(this);
         var aabbox = this.collider().aabbox;
         // If middle is in bush
         if ( $gameMap.isBush( $gameMap.roundX( this._x + ( aabbox.left + aabbox.right ) / 2 ), $gameMap.roundY( this._y + ( aabbox.top + aabbox.bottom ) / 2 ) ) ) {
@@ -889,7 +913,9 @@
         return false;
       };
 
+      var Game_CharacterBase_canPass = Game_CharacterBase.prototype.canPass;
       Game_CharacterBase.prototype.canPass = function( x, y, d ) {
+        if (DISABLE_PLUGIN) return Game_CharacterBase_canPass.call(this, x, y, d);
         if ( this.isThrough() || this.isDebugThrough() ) {
             return true;
         }
@@ -903,7 +929,9 @@
         return true;
       };
 
+      var Game_CharacterBase_canPassDiagonally = Game_CharacterBase.prototype.canPassDiagonally;
       Game_CharacterBase.prototype.canPassDiagonally = function( x, y, horz, vert ) {
+        if (DISABLE_PLUGIN) return Game_CharacterBase_canPassDiagonally.call(this, x, y, horz, vert);
         if ( this.isThrough() || this.isDebugThrough() ) {
             return true;
         }
@@ -919,12 +947,14 @@
 
       var Game_CharacterBase_setDirection = Game_CharacterBase.prototype.setDirection;
       Game_CharacterBase.prototype.setDirection = function( d ) {
+        if (DISABLE_PLUGIN) return Game_CharacterBase_setDirection.call(this, d);
         Game_CharacterBase_setDirection.call( this, d );
         this._direction8 = this._direction;
       };
 
       var Game_CharacterBase_screenX = Game_CharacterBase.prototype.screenX;
       Game_CharacterBase.prototype.screenX = function() {
+        if (DISABLE_PLUGIN) return Game_CharacterBase_screenX.call(this);
         var round = Math.round;
         Math.round = Math.floor;
         var val = Game_CharacterBase_screenX.call( this );
@@ -934,6 +964,7 @@
 
       var Game_CharacterBase_screenY = Game_CharacterBase.prototype.screenY;
       Game_CharacterBase.prototype.screenY = function() {
+        if (DISABLE_PLUGIN) return Game_CharacterBase_screenY.call(this);
         var round = Math.round;
         Math.round = Math.floor;
         var val = Game_CharacterBase_screenY.call( this );
@@ -1227,7 +1258,9 @@
      */
     ( function() {
 
+      var Game_Character_updateRoutineMove = Game_Character.prototype.updateRoutineMove;
       Game_Character.prototype.updateRoutineMove = function() {
+        if (DISABLE_PLUGIN) return Game_Character_updateRoutineMove.call(this);
         if ( this._moveTarget ) {
           this.continueProcessMoveCommand();
           var moveRoute = this._moveRoute;
@@ -1241,14 +1274,16 @@
           this.setMovementSuccess( true );
           var command = this._moveRoute.list[this._moveRouteIndex];
           if ( command ) {
-            this.processMoveCommand( command );
+            this.processMoveCommand(command);
             this.continueProcessMoveCommand();
             this.advanceMoveRouteIndex();
           }
         }
       };
 
+      var Game_Character_moveRandom = Game_Character.prototype.moveRandom;
       Game_Character.prototype.moveRandom = function() {
+        if (DISABLE_PLUGIN) return Game_Character_moveRandom.call(this);
         if ( this._moveTarget ) {
           return;
         }
@@ -1264,7 +1299,9 @@
         this._moveTargetY = Math.round( this.y + vy );
       };
 
+      var Game_Character_moveTowardCharacter = Game_Character.prototype.moveTowardCharacter;
       Game_Character.prototype.moveTowardCharacter = function( character ) {
+        if (DISABLE_PLUGIN) return Game_Character_moveTowardCharacter.call(this, character);
         var vx = character.x - this.x;
         var vy = character.y - this.y;
         var length = Math.sqrt( vx * vx + vy * vy );
@@ -1279,7 +1316,9 @@
         }
       };
 
+      var Game_Character_moveAwayFromCharacter = Game_Character.prototype.moveAwayFromCharacter;
       Game_Character.prototype.moveAwayFromCharacter = function( character ) {
+        if (DISABLE_PLUGIN) return Game_Character_moveAwayFromCharacter.call(this, character);
         var vx = character.x - this.x;
         var vy = character.y - this.y;
         var length = Math.sqrt( vx * vx + vy * vy );
@@ -1294,6 +1333,7 @@
 
       var Game_Character_processMoveCommand = Game_Character.prototype.processMoveCommand;
       Game_Character.prototype.processMoveCommand = function( command ) {
+        if (DISABLE_PLUGIN) return Game_Character_processMoveCommand.call(this, command);
         var gc = Game_Character;
         var params = command.parameters;
         switch ( command.code ) {
@@ -1392,21 +1432,29 @@
         this._circularMovement = PLAYER.CIRCULAR_MOVEMENT;
       };
 
-      Game_Player.prototype.checkEventTriggerTouch = Game_CharacterBase.prototype.checkEventTriggerTouch;
+      var Game_Player_checkEventTriggerTouch = Game_Player.prototype.checkEventTriggerTouch;
+      Game_Player.prototype.checkEventTriggerTouch = function(x, y) {
+        if (DISABLE_PLUGIN) return Game_Player_checkEventTriggerTouch.call(this, x, y);
+        return Game_CharacterBase.prototype.checkEventTriggerTouch.call(this);
+      };
 
       var Game_Player_encounterProgressValue = Game_Player.prototype.encounterProgressValue;
       Game_Player.prototype.encounterProgressValue = function() {
+        if (DISABLE_PLUGIN) return Game_Player_encounterProgressValue.call(this);
         return this.stepDistance * Game_Player_encounterProgressValue.call( this );
       };
 
       var Game_Player_clearTransferInfo = Game_Player.prototype.clearTransferInfo;
       Game_Player.prototype.clearTransferInfo = function() {
+        if (DISABLE_PLUGIN) return Game_Player_clearTransferInfo.call(this);
         Game_Player_clearTransferInfo.call( this );
         this._moveTarget = false;
         this._moveTargetSkippable = false;
       };
 
+      var Game_Player_update = Game_Player.prototype.update;
       Game_Player.prototype.update = function( sceneActive ) {
+        if (DISABLE_PLUGIN) return Game_Player_update.call(this, sceneActive);
         var lastScrolledX = this.scrolledX();
         var lastScrolledY = this.scrolledY();
         var wasMoving = this._wasMoving;
@@ -1423,11 +1471,15 @@
         this._followers.update();
       };
 
+      var Game_Player_getInputDirection = Game_Player.prototype.getInputDirection;
       Game_Player.prototype.getInputDirection = function() {
+        if (DISABLE_PLUGIN) return Game_Player_getInputDirection.call(this);
         return Input.dir8;
       };
 
+      var Game_Player_moveByInput = Game_Player.prototype.moveByInput;
       Game_Player.prototype.moveByInput = function() {
+        if (DISABLE_PLUGIN) return Game_Player_moveByInput.call(this);
         if ( $gameSystem._staticEnableTouchMouse != INPUT_CONFIG.ENABLE_TOUCH_MOUSE ) {
           $gameSystem._staticEnableTouchMouse = INPUT_CONFIG.ENABLE_TOUCH_MOUSE;
           $gameSystem._enableTouchMouse = INPUT_CONFIG.ENABLE_TOUCH_MOUSE;
@@ -1618,7 +1670,9 @@
         }
       };
 
+      var Game_Player_checkEventTriggerHere = Game_Player.prototype.checkEventTriggerHere;
       Game_Player.prototype.checkEventTriggerHere = function( triggers ) {
+        if (DISABLE_PLUGIN) return Game_Player_checkEventTriggerHere.call(this, triggers);
         if ( this.canStartLocalEvents() ) {
           var collider = this.collider();
           var bboxTests = $gameMap.getAABBoxTests( this );
@@ -1677,7 +1731,9 @@
         }
       };
 
+      var Game_Player_checkEventTriggerThere = Game_Player.prototype.checkEventTriggerThere;
       Game_Player.prototype.checkEventTriggerThere = function( triggers ) {
+        if (DISABLE_PLUGIN) return Game_Player_checkEventTriggerThere.call(this, triggers);
         if ( this.canStartLocalEvents() ) {
           var vx = Direction.isLeft( this._direction ) ? -this.actionWidth() : ( Direction.isRight( this._direction ) ? this.actionWidth() : 0 );
           var vy = Direction.isUp( this._direction ) ? -this.actionHeight() : ( Direction.isDown( this._direction ) ? this.actionHeight() : 0 );
@@ -1765,7 +1821,9 @@
         }
       };
 
+      var Game_Player_startMapEvent = Game_Player.prototype.startMapEvent;
       Game_Player.prototype.startMapEvent = function( x, y, triggers, normal ) {
+        if (DISABLE_PLUGIN) return Game_Player_startMapEvent.call(this, x, y, triggers, normal);
         if ( !$gameMap.isEventRunning() ) {
           $gameMap.eventsXy( x, y ).forEach( function( event ) {
             if ( event.isTriggerIn( triggers ) && event.isNormalPriority() === normal ) {
@@ -1775,15 +1833,21 @@
         }
       };
 
+      var Game_Player_moveStraight = Game_Player.prototype.moveStraight;
       Game_Player.prototype.moveStraight = function( d ) {
+        if (DISABLE_PLUGIN) return Game_Player_moveStraight.call(this, d);
         Game_Character.prototype.moveStraight.call( this, d );
       };
 
+      var Game_Player_moveDiagonally = Game_Player.prototype.moveDiagonally;
       Game_Player.prototype.moveDiagonally = function( horz, vert ) {
+        if (DISABLE_PLUGIN) return Game_Player_moveDiagonally.call(this, horz, vert);
         Game_Character.prototype.moveDiagonally.call( this, horz, vert );
       };
 
+      var Game_Player_getOnVehicle = Game_Player.prototype.getOnVehicle;
       Game_Player.prototype.getOnVehicle = function() {
+        if (DISABLE_PLUGIN) return Game_Player_getOnVehicle.call(this);
         var vx = Direction.isLeft( this._direction ) ? -0.5 : ( Direction.isRight( this._direction ) ? 0.5 : 0 );
         var vy = Direction.isUp( this._direction ) ? -0.5 : ( Direction.isDown( this._direction ) ? 0.5 : 0 );
         var bboxTests = $gameMap.getAABBoxTests( this, vx, vy );
@@ -1832,7 +1896,9 @@
         return this._vehicleGettingOn;
       };
 
+      var Game_Player_getOffVehicle = Game_Player.prototype.getOffVehicle;
       Game_Player.prototype.getOffVehicle = function() {
+        if (DISABLE_PLUGIN) return Game_Player_getOffVehicle.call(this);
         if ( this.vehicle().isLandOk( this.x, this.y, this.direction() ) ) {
           if ( this.isInAirship() ) {
             this.setDirection( 2 );
@@ -1891,7 +1957,9 @@
         return this._vehicleGettingOff;
       };
 
+      var Game_Player_updateVehicleGetOff = Game_Player.prototype.updateVehicleGetOff;
       Game_Player.prototype.updateVehicleGetOff = function() {
+        if (DISABLE_PLUGIN) return Game_Player_updateVehicleGetOff.call(this);
         if ( !this.areFollowersGathering() && this.vehicle().isLowest() && this._collisionType !== CollisionMesh.WALK ) {
           this._collider = this.vehicle()._passengerCollider;
           this.vehicle()._passengerCollider = undefined;
@@ -1942,7 +2010,9 @@
         this._circularMovement = FOLLOWERS.CIRCULAR_MOVEMENT;
       };
 
+      var Game_Follower_chaseCharacter = Game_Follower.prototype.chaseCharacter;
       Game_Follower.prototype.chaseCharacter = function( character ) {
+        if (DISABLE_PLUGIN) return Game_Follower_chaseCharacter.call(this, character);
         if ( this._moveTarget || this._isFrozen ) {
           return;
         }
@@ -2061,7 +2131,9 @@
      */
     ( function() {
 
+      var Game_Followers_update = Game_Followers.prototype.update;
       Game_Followers.prototype.update = function() {
+        if (DISABLE_PLUGIN) return Game_Followers_update.call(this);
           if ( this.areGathering() ) {
             var direction = $gamePlayer.direction();
             var visibleFollowers = this.visibleFollowers();
@@ -2097,13 +2169,17 @@
           }
       };
 
+      var Game_Followers_gather = Game_Followers.prototype.gather;
       Game_Followers.prototype.gather = function() {
+        if (DISABLE_PLUGIN) return Game_Followers_gather.call(this);
         this._gathering = true;
         this._targetX = $gamePlayer._x;
         this._targetY = $gamePlayer._y;
       };
 
+      var Game_Followers_areGathered = Game_Followers.prototype.areGathered;
       Game_Followers.prototype.areGathered = function() {
+        if (DISABLE_PLUGIN) return Game_Followers_areGathered.call(this);
         var screenRadius = Math.sqrt( Graphics.width * Graphics.width + Graphics.height * Graphics.height ) / 2;
         screenRadius /= Math.sqrt( $gameMap.tileWidth() * $gameMap.tileWidth() + $gameMap.tileHeight() * $gameMap.tileHeight() ) / 2;
 
@@ -2170,7 +2246,9 @@
         }
       };
 
-      Game_Vehicle.prototype.isLandOk = function( x, y, d ) {
+      var Game_Vehicle_isLandOk = Game_Vehicle.prototype.isLandOk;
+      Game_Vehicle.prototype.isLandOk = function(x, y, d ) {
+        if (DISABLE_PLUGIN) return Game_Vehicle_isLandOk.call(this, x, y, d);
         if ( this.isAirship() ) {
           $gamePlayer._collider = this._passengerCollider; // Reset colliders temporarily
           // Check rough tiles under colliders
@@ -2340,7 +2418,9 @@
         $gameSystem._eventColliders[$gameMap.mapId()][this.eventId()] = collider;
       };
 
-      Game_Event.prototype.checkEventTriggerTouch = function( x, y ) {
+      var Game_Event_checkEventTriggerTouch = Game_Event.prototype.checkEventTriggerTouch;
+      Game_Event.prototype.checkEventTriggerTouch = function(x, y ) {
+        if (DISABLE_PLUGIN) return Game_Event_checkEventTriggerTouch.call(this, x, y);
         if ( this._trigger === 2 && !$gameMap.isEventRunning() && !this.isJumping() && this.isNormalPriority() ) {
           var bboxTests = $gameMap.getAABBoxTests( this, x - this._x, y - this._y );
           var loopMap = -1;
@@ -2388,7 +2468,8 @@
     ( function() {
 
       var Game_Interpreter_command101 = Game_Interpreter.prototype.command101;
-      Game_Interpreter.prototype.command101 = function() {
+      Game_Interpreter.prototype.command101 = function () {
+        if (DISABLE_PLUGIN) return Game_Interpreter_command101.call(this);
         Game_Interpreter_command101.call( this );
         $gamePlayer._touchTarget = null;
       };
@@ -2415,7 +2496,9 @@
         }
       };
 
+      var Game_Map_tileId = Game_Map.prototype.tileId;
       Game_Map.prototype.tileId = function( x, y, z ) {
+        if (DISABLE_PLUGIN) return Game_Map_tileId.call(this, x, y, z);
         x = x | 0;
         y = y | 0;
         var width = $dataMap.width;
@@ -2423,14 +2506,18 @@
         return $dataMap.data[( z * height + y ) * width + x] || 0;
       };
 
+      var Game_Map_canvasToMapX = Game_Map.prototype.canvasToMapX;
       Game_Map.prototype.canvasToMapX = function( x ) {
+        if (DISABLE_PLUGIN) return Game_Map_canvasToMapX.call(this, x);
         var tileWidth = this.tileWidth();
         var originX = this._displayX * tileWidth;
         var mapX = ( originX + x ) / tileWidth;
         return this.roundX( mapX );
       };
 
+      var Game_Map_canvasToMapY = Game_Map.prototype.canvasToMapY;
       Game_Map.prototype.canvasToMapY = function( y ) {
+        if (DISABLE_PLUGIN) return Game_Map_canvasToMapY.call(this, y);
         var tileHeight = this.tileHeight();
         var originY = this._displayY * tileHeight;
         var mapY = ( originY + y ) / tileHeight;
@@ -2729,7 +2816,9 @@
      */
     ( function() {
 
+      var Sprite_Destination_createBitmap = Sprite_Destination.prototype.createBitmap;
       Sprite_Destination.prototype.createBitmap = function() {
+        if (DISABLE_PLUGIN) return Sprite_Destination_createBitmap.call(this);
         var tileWidth = $gameMap.tileWidth();
         var tileHeight = $gameMap.tileHeight();
         this.bitmap = new Bitmap( tileWidth, tileHeight );
@@ -2739,7 +2828,9 @@
         this.blendMode = Graphics.BLEND_ADD;
       };
 
+      var Sprite_Destination_update = Sprite_Destination.prototype.update;
       Sprite_Destination.prototype.update = function() {
+        if (DISABLE_PLUGIN) return Sprite_Destination_update.call(this);
         Sprite.prototype.update.call( this );
         if ( $gamePlayer._touchTarget ){
           this.updatePosition();
@@ -2751,7 +2842,9 @@
         }
       };
 
+      var Sprite_Destination_updatePosition = Sprite_Destination.prototype.updatePosition;
       Sprite_Destination.prototype.updatePosition = function() {
+        if (DISABLE_PLUGIN) return Sprite_Destination_updatePosition.call(this);
         var tileWidth = $gameMap.tileWidth();
         var tileHeight = $gameMap.tileHeight();
         var x = $gamePlayer._touchTarget.x;
